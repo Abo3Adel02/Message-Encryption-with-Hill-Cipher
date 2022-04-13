@@ -1,0 +1,135 @@
+#Hill Cipher Program
+import numpy as np
+from tkinter import *
+# we used tkinter to create the GUI
+# we used numpy to ease the use of the arrays
+# this function is to encrypt the message with the key(matrix)
+# hlol,abds , hlop
+def encrypt():
+    msg=x1.get()
+    cipher=y1.get()
+    global msg_length
+    msg_length=len(msg)
+    msg = msg.replace(" ", "")
+    C = make_key(cipher)
+    len_check = len(msg) % 2 == 0
+    if not len_check:
+        msg += "0"
+    P = matrix_string(msg)
+    msg_len = int(len(msg) / 2)
+    encrypted_msg = ""
+    for i in range(msg_len):
+        #  product of matrix
+        row_0 = P[0][i] * C[0][0] + P[1][i] * C[0][1]
+        integer = int(row_0 % 26 + 65)
+        encrypted_msg += chr(integer)
+        row_1 = P[0][i] * C[1][0] + P[1][i] * C[1][1]
+        integer = int(row_1 % 26 + 65)
+        encrypted_msg += chr(integer)
+    Label(text=encrypted_msg ,font=80,fg='black').place(x=312,y=170)
+ 
+    return 
+# this function is to decrypt the message with the key(matrix)
+
+def decrypt():
+    encrypted_msg=x2.get()
+    cipher=y2.get()
+    C = make_key(cipher)
+
+    determinant = C[0][0] * C[1][1] - C[0][1] * C[1][0]
+    determinant = determinant % 26
+    multiplicative_inverse = multiplicative(determinant)
+    C_inverse = C
+    C_inverse[0][0], C_inverse[1][1] = C_inverse[1, 1], C_inverse[0, 0]
+    C[0][1] *= -1
+    C[1][0] *= -1
+    for row in range(2):
+        for column in range(2):
+            C_inverse[row][column] *= multiplicative_inverse
+            C_inverse[row][column] = C_inverse[row][column] % 26
+    P = matrix_string(encrypted_msg)
+    msg_len = int(len(encrypted_msg) / 2)
+    decrypted_msg = ""
+    for i in range(msg_len):
+        column_0 = P[0][i] * C_inverse[0][0] + P[1][i] * C_inverse[0][1]
+        integer = int(column_0 % 26 + 65)
+        decrypted_msg += chr(integer)
+        column_1 = P[0][i] * C_inverse[1][0] + P[1][i] * C_inverse[1][1]
+        integer = int(column_1 % 26 + 65)
+        decrypted_msg += chr(integer)
+    if msg_length%2!=0:
+        decrypted_msg = decrypted_msg[:-1]
+    Label(text=decrypted_msg ,font=80,fg='black').place(x=312,y=400)
+    return 
+
+# this function is used to check the multiplicative inverse of the key matrix
+def multiplicative(determinant):
+    multiplicative_inverse = -1
+    for i in range(26):
+        inverse = determinant * i
+        if inverse % 26 == 1:
+            multiplicative_inverse = i
+            break
+    return multiplicative_inverse
+
+# this function is used to make the key matrix
+def make_key(cipher):
+    determinant = 0
+    C = None
+    while True:
+        C = matrix_string(cipher)
+        determinant = C[0][0] * C[1][1] - C[0][1] * C[1][0]
+        determinant = determinant % 26
+        inverse_element = multiplicative(determinant)
+        if inverse_element == -1:
+            messagebox.showwarning("Error","uninvertible key , Enter another key")
+            quit()
+            
+        else:
+            break
+    return C
+# this function is used to create matrix of integers from string
+def matrix_string(string):
+    integers = []
+    for char in string:
+        char = char.upper()
+        integer = ord(char) - 65
+        integers.append(integer)
+    length = len(integers)
+    M = np.zeros((2, int(length / 2)))
+    iterator = 0
+    for column in range(int(length / 2)):
+        for row in range(2):
+            M[row][column] = integers[iterator]
+            iterator += 1
+    return M
+
+# the part below is mainly for the GUI (labels, buttons & etc.)
+window=Tk()
+window.geometry('550x500+300+150')
+window.title('Hill Cipher')
+e=Button(text='Encrypt',command=encrypt,bd=10,font=90,height=1,width=16,fg='white',bg='green').place(x=200,y=90)
+d=Button(text='Decrypt',command=decrypt,bd=10,font=90,height=1,width=16,fg='black',bg='red').place(x=200,y=310)
+
+messagetxt=Label(text='Message',font=80,fg='black').place(x=150,y=13)
+keytxt=Label(text='key (4 letters)',font=80,fg='black').place(x=120,y=55)
+
+encrypted_messagetxt=Label(text='The Encrypted Message: ' ,font=80,fg='black').place(x=80,y=170)
+messagetxt2=Label(text='Encrypted Message' ,font=20,fg='black').place(x=75,y=232)
+messagetxt2=Label(text='The Decrypted Message: ' ,font=20,fg='black').place(x=75,y=400)
+
+keytxt2=Label(text='key (4 letters)',font=80,fg='black').place(x=120,y=273)
+
+x1=StringVar()
+y1=StringVar()
+
+message1=Entry(textvariable=x1, width=30).place(x=270,y=20)
+key1=Entry(textvariable=y1, width=30).place(x=270,y=60)
+
+x2=StringVar()
+y2=StringVar()
+
+message2=Entry(textvariable=x2, width=30).place(x=270,y=240)
+key2=Entry(textvariable=y2, width=30).place(x=270,y=280)
+
+window.mainloop()
